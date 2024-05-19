@@ -34,14 +34,23 @@ class Tabela:
     def convert_timestamp(self, df):
         df['date'] = pd.to_datetime(df['timestamp'], unit='ms')
         return df
+    
+    def delete_columns(self, df):
+        df = df.drop(['timestamp', 'total_volume', 'market_cap'], axis=1)
+        return df
 
     def reorder_columns(self, df):
-        df = df[['date', 'timestamp', 'price', 'market_cap', 'total_volume']]
+        df = df[['date', 'price']]
         return df
 
     def get_dataframe(self):
         response = self.get_response()
         df = self.create_dataframe(response)
         df = self.convert_timestamp(df)
+        df = self.delete_columns(df)
         df = self.reorder_columns(df)
         return df
+
+if __name__ == "__main__":
+    tabela = Tabela("bitcoin", "usd", "7")
+    st.dataframe(tabela.dataframe)
