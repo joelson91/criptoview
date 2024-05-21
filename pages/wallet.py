@@ -10,10 +10,11 @@ with st.form("Adicionar Transação"):
     criptomoeda = st.text_input('Criptomoeda')
     data = st.date_input('Data')
     valor = st.number_input('Valor')
+    quantidade = st.number_input('Quantidade')
     tipo = st.selectbox('Tipo', ['compra', 'venda'])
     submit_button = st.form_submit_button(label='Adicionar Transação')
     if submit_button:
-        carteira.adicionar_transacao(criptomoeda, data, valor, tipo)
+        carteira.adicionar_transacao(criptomoeda, data, valor, quantidade, tipo)
 
 # Listar transações
 st.title("Lista de Transações")
