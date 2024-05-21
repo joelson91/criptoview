@@ -1,5 +1,7 @@
 # criptoview
 
+![Streamlit Logo](image.jpeg)
+
 ## Descrição
 
 Criptoview é um projeto que permite aos usuários visualizar e gerenciar suas transações de criptomoedas.
