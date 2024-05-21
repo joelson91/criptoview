@@ -33,11 +33,12 @@ class Carteira:
     def __init__(self):
         self.transacoes = []
 
-    def adicionar_transacao(self, criptomoeda, data, valor, tipo):
+    def adicionar_transacao(self, criptomoeda, data, valor, quantidade, tipo):
         transacao = {
             'criptomoeda': criptomoeda,
             'data': data,
             'valor': valor,
+            'quantidade': quantidade,
             'tipo': tipo
         }
         self.transacoes.append(transacao)
