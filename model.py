@@ -1,47 +1,53 @@
-import pandas as pd
-import requests
 import streamlit as st
+import coingecko
+import pandas as pd
 
+# Gerenciar segredos do Coingecko
+st.set_page_config(layout="wide")
+coingecko_key = st.secrets["coingecko_key"]
+
+# Classe Tabela para encapsular lógica de recuperação de dados
 class Tabela:
-    url_base = "https://api.coingecko.com/api/v3"
-
-    headers = {
-        "accept": "application/json",
-        "x-cg-demo-api-key": st.secrets["coingecko_key"]
-    }
-
     def __init__(self, id, moeda, dias):
-        self.url = self.url_base + f"/coins/{id}/market_chart?vs_currency={moeda}&days={dias}&interval=daily"
+        self.id = id
+        self.moeda = moeda
+        self.dias = dias
         self.dataframe = self.get_dataframe()
 
-    def get_response(self):
-        try:
-            response = requests.get(self.url, headers=self.headers)
-            response.raise_for_status()
-        except requests.exceptions.HTTPError as http_err:
-            print(f'HTTP error occurred: {http_err}')
-        except Exception as err:
-            print(f'Other error occurred: {err}')
-        else:
-            return response.json()
-
-    def create_dataframe(self, response):
-        df = pd.DataFrame(response['prices'], columns=['timestamp', 'price'])
-        df['market_cap'] = pd.DataFrame(response['market_caps'], columns=['timestamp', 'market_cap'])['market_cap']
-        df['total_volume'] = pd.DataFrame(response['total_volumes'], columns=['timestamp', 'total_volume'])['total_volume']
-        return df
-
-    def convert_timestamp(self, df):
-        df['date'] = pd.to_datetime(df['timestamp'], unit='ms')
-        return df
-
-    def reorder_columns(self, df):
-        df = df[['date', 'timestamp', 'price', 'market_cap', 'total_volume']]
-        return df
-
     def get_dataframe(self):
-        response = self.get_response()
-        df = self.create_dataframe(response)
-        df = self.convert_timestamp(df)
-        df = self.reorder_columns(df)
+        # Conectar à API Coingecko
+        cg = coingecko.CoinGeckoDemoClient(api_key=coingecko_key)
+
+        # Recuperar dados de preços
+        response = cg.coins.get_market_chart(self.id, self.moeda, self.dias)
+        prices = response['prices']
+
+        # Converter dados em DataFrame
+        df = pd.DataFrame(prices, columns=['timestamp', 'price'])
+        df['date'] = pd.to_datetime(df['timestamp'], unit='ms')
+        df = df[['date', 'price']]
         return df
+
+# Implementação da carteira
+class Carteira:
+    def __init__(self):
+        self.transacoes = []
+
+    def adicionar_transacao(self, criptomoeda, data, valor, quantidade, tipo):
+        transacao = {
+            'criptomoeda': criptomoeda,
+            'data': data,
+            'valor': valor,
+            'quantidade': quantidade,
+            'tipo': tipo
+        }
+        self.transacoes.append(transacao)
+
+    def calcular_rendimento(self):
+        rendimento = 0
+        for transacao in self.transacoes:
+            if transacao['tipo'] == 'compra':
+                rendimento -= transacao['valor']
+            elif transacao['tipo'] == 'venda':
+                rendimento += transacao['valor']
+        return rendimento
