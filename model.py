@@ -1,10 +1,13 @@
-import pandas as pd
 import streamlit as st
 import coingecko
+import pandas as pd
 
+# Gerenciar segredos do Coingecko
+st.set_page_config(layout="wide")
+coingecko_key = st.secrets["coingecko_key"]
+
+# Classe Tabela para encapsular lógica de recuperação de dados
 class Tabela:
-    cg = coingecko.CoinGeckoDemoClient(api_key=st.secrets["coingecko_key"])
-
     def __init__(self, id, moeda, dias):
         self.id = id
         self.moeda = moeda
@@ -12,25 +15,38 @@ class Tabela:
         self.dataframe = self.get_dataframe()
 
     def get_dataframe(self):
-        response = self.cg.coins.get_market_chart(self.id, self.moeda, self.dias)
+        # Conectar à API Coingecko
+        cg = coingecko.CoinGeckoDemoClient(api_key=coingecko_key)
+
+        # Recuperar dados de preços
+        response = cg.coins.get_market_chart(self.id, self.moeda, self.dias)
         prices = response['prices']
+
+        # Converter dados em DataFrame
         df = pd.DataFrame(prices, columns=['timestamp', 'price'])
         df['date'] = pd.to_datetime(df['timestamp'], unit='ms')
         df = df[['date', 'price']]
         return df
 
-if __name__ == "__main__":
-    st.title("Visualizador de Preços de Criptomoedas")
+# Implementação da carteira
+class Carteira:
+    def __init__(self):
+        self.transacoes = []
 
-    moedas = ["usd", "eur", "brl"]
-    criptomoedas = ["bitcoin", "ethereum", "cardano", "solana", "polkadot"]
+    def adicionar_transacao(self, criptomoeda, data, valor, tipo):
+        transacao = {
+            'criptomoeda': criptomoeda,
+            'data': data,
+            'valor': valor,
+            'tipo': tipo
+        }
+        self.transacoes.append(transacao)
 
-    criptomoeda = st.selectbox("Selecione uma criptomoeda", criptomoedas, index=0, key="criptomoeda", help="Selecione a criptomoeda que deseja visualizar")
-    moeda_selecionada = st.selectbox("Selecione uma moeda", moedas, index=2, key="moeda", help="Selecione a moeda que deseja visualizar")
-    dias_selection = st.slider("Selecione o número de dias", 1, 365, 7)
-
-    tabela = Tabela(criptomoeda , moeda_selecionada, dias_selection)
-
-    if criptomoeda is not None:
-        st.title(f"Gráfico de Preços do {criptomoeda.capitalize()}")
-        st.line_chart(tabela.dataframe.set_index('date'))
+    def calcular_rendimento(self):
+        rendimento = 0
+        for transacao in self.transacoes:
+            if transacao['tipo'] == 'compra':
+                rendimento -= transacao['valor']
+            elif transacao['tipo'] == 'venda':
+                rendimento += transacao['valor']
+        return rendimento
